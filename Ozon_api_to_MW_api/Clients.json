@@ -1,0 +1,18 @@
+[	
+	{
+	"id":"id1",
+	"key":"key1",
+	"war_login":"wl1",
+	"war_pass":"wp1",
+	"org_id":"oi1",
+	"wareh_id":"wi1"
+	},
+	{
+	"id":"id2",
+	"key":"key2",
+	"war_login":"wl2",
+	"war_pass":"wp2",
+	"org_id":"oi2",
+	"wareh_id":"wi2"
+	}	
+]
