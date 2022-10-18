@@ -4,6 +4,7 @@ import re
 from random import randrange
 import json
 
+#func to generate random browser user-agent
 def user_agent():
 	with httpx.Client() as client:
 		i=client.get('https://seolik.ru/user-agents-list')

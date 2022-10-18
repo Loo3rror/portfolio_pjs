@@ -9,12 +9,14 @@ from new_user_agent import user_agent
 
 meta_app=FastAPI()
 
+#hello
 @meta_app.get('/')
 async def root():
 	j={'welcome':'Welcome to the metacritic api',
 	'help':'Please, research /docs file for your questions'}
 	return j
 
+#awailable platforms list
 @meta_app.get('/platforms')
 async def ret_platforms():
 	p={'platforms':['pc',
@@ -24,6 +26,7 @@ async def ret_platforms():
 	'ios']}
 	return p
 
+#search game and return its data in json (with console/platform as possible argument)
 @meta_app.get('/games/{game}')
 async def get_game_json(game,console='pc'):
 	async with httpx.AsyncClient(headers={'User-Agent':user_agent()},params=None) as client:

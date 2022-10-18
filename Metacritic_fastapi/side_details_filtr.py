@@ -2,13 +2,16 @@ import httpx
 from bs4 import BeautifulSoup
 import asyncio
 
+#clean possible spaces in game search
 def clean_req(name):
 	name=name.lower().replace(' ','-')
 	return name
 
+#clean names from BeautifulSoup find
 def clean_name(name):
 	return name.replace('  ','').replace('\n','')
 
+#dict of BeautifulSoup funct search, depending on key
 def filtr_data(data,body):
 	if data!=None:
 		b={#add this list as seperate file
