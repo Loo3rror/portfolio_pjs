@@ -22,5 +22,5 @@ def filtr_data(data,body):
 		'genre':lambda data:[d.get_text() for d in data.find_all('span','data')],
 		'platforms':lambda data:[d.get_text() for d in data.find_all('a','hover_none')]
 	}
-		return {body:b[body](data)}
+		return b[body](data)
 	return None
