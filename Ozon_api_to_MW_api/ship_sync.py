@@ -36,7 +36,7 @@ class async_request_Ozon():
 				orders=await asyncio.gather(*[self.post_list(client,t) for t in self.Now_time])
 				shiping_data=[]
 				for order in orders:
-					if order['postings']!=[]:#filter t with no shipmetns
+					if order['postings']!=[]:#filter t with no shipments
 						trail=asyncio.gather(*[self.data_filtr(data) for data in order['postings']])
 						shiping_data.append(trail)
 				fin_info=await asyncio.gather(*shiping_data)
