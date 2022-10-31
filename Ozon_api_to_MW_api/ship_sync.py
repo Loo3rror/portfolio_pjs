@@ -4,15 +4,20 @@ import httpx
 import asyncio
 from post_body import body_info
 
-class async_request_Ozon():
-	def __init__(self,Org_ID,T):#time T - [str YYYY-MM-DD]
-		self.id=Org_ID
-		self.Now_time=T
+class Ozon_req():
+	"""collecting and returning shipment data;
+	currently allows to get list of products shipped in a day; 
+	combine with post_body.py, containing jsonbody"""
+	def __init__(self,org,now_time):#time now_time - [str YYYY-MM-DD]
+		self.apiid=org['id']
+		self.apikey=org['key']
+		self.now_time=now_time
 
-#~~~~~~~~~~~~seller info block~~~~~~~~~~~~~~~~~~~~~
 	#get shipment data form seller
 	async def post_list(self,client,t):
-			ozon_get=await client.post('https://api-seller.ozon.ru/v3/posting/fbs/unfulfilled/list',json=body_info(search_time=t)['day_ship'])#seller api is up to update, if legacy func return error, change post body and url to 'https://api-seller.ozon.ru/v3/posting/fbs/list'
+			ozon_get=await client.post('https://api-seller.ozon.ru/v3/posting/fbs/unfulfilled/list',
+				json=body_info(search_time=t)['day_ship'])
+			#seller api is up to update, if legacy func return error, change post body and url to 'https://api-seller.ozon.ru/v3/posting/fbs/list'
 			ozon_info=ozon_get.content
 			check=json.loads(ozon_info)
 			check=check["result"]
@@ -30,10 +35,10 @@ class async_request_Ozon():
 						return valued_data
 
 	#main request to seller
-	async def get_list_current(self,org):
-		Headers={'Client-Id': org['id'],'Api-Key': org['key']}
+	async def get_list_current(self):
+		Headers={'Client-Id':self.apiid,'Api-Key':self.apikey}
 		async with httpx.AsyncClient(headers=Headers) as client:
-				orders=await asyncio.gather(*[self.post_list(client,t) for t in self.Now_time])
+				orders=await asyncio.gather(*[self.post_list(client,t) for t in self.now_time])
 				shiping_data=[]
 				for order in orders:
 					if order['postings']!=[]:#filter t with no shipments
@@ -43,7 +48,17 @@ class async_request_Ozon():
 				return fin_info
 
 
-#~~~~~~~~~~~~warehouse info block~~~~~~~~~~~~~~~~~~~~~
+class MWapi_shipment():
+	"""
+	connects to MoySklad; 
+	compile_shipment(data) creates new shipment with products in data
+	"""
+	def __init__(self,org):
+		self.war_login=org['war_login']
+		self.war_pass=org['war_pass']
+		self.org_id=org['org_id']
+		self.wareh_id=org['wareh_id']
+
 	#get product data from DB api
 	async def get_product_data(self,client,product):
 					link=await 	client.get(f"https://online.moysklad.ru/api/remap/1.2/entity/product?search={product[0]}")
@@ -65,6 +80,7 @@ class async_request_Ozon():
 
 	#connect product info with warehous shipment body dict
 	async def create_shipment_json(self,client,shipment,org_id,wareh_id):
+		#body of demand position
 		j={
 			'name':shipment[0],
 			#client organization info
@@ -115,32 +131,32 @@ class async_request_Ozon():
 			end_task = await asyncio.gather(*[self.post_position(client,product,link) for product in shipment[1]])
 
 	#main request to warehouse api
-	async def compile_shipment(self,data,war_login,war_pass,org_id,wareh_id):
-		Auth=HTTPBasicAuth(war_login,war_pass)
+	async def compile_shipment(self,data):
+		Auth=HTTPBasicAuth(self.war_login,self.war_pass)
 		Headers={'Content-Type': 'application/json'}
-		limits = httpx.Limits(max_connections=5, max_keepalive_connections=0)#warehouse api is up to update, takes only 5 connections by user simultaneously
+		#warehouse api is up to update, takes only 5 connections by user simultaneously
+		limits = httpx.Limits(max_connections=5, max_keepalive_connections=0)
 		async with httpx.AsyncClient(auth=Auth,headers=Headers,limits=limits) as client:
 			all_s=[]
 			for shipments in data:
-				all_s.append(asyncio.gather(*[self.create_shipment_json(client,shipment,org_id,wareh_id) for shipment in shipments]))
+				all_s.append(asyncio.gather(*[self.create_shipment_json(client,shipment,self.org_id,self.wareh_id) for shipment in shipments]))
 			all_s = await asyncio.gather(*all_s)
 			for shipments in all_s:
 				end_task=await asyncio.gather(*[self.post_demand(client,shipment) for shipment in shipments])
 
-	#function to sync seller shipments to warehouse demand in set time
-	async def main(self):
-		for org in self.id:
-			data_get=await asyncio.gather(self.get_list_current(org))
-			for d in data_get:
-				await asyncio.gather(self.compile_shipment(d,org['war_login'],org['war_pass'],org['org_id'],org['wareh_id']))
 
-
-#sample usage~~~
+#~~~~~~~~~~~~~~~~~function to sync seller shipments to warehouse demand in set time
+async def main(Clients,days):
+		for org in Clients:
+			data_get=await asyncio.gather(Ozon_req(org,days).get_list_current())
+			for data in data_get:
+				await asyncio.gather(MWapi_shipment(org).compile_shipment(data))
+		
+#~~~sample usage
 #if __name__ == '__main__':
-#	clients=json.load(open('Clients.json'))
+#	Clients1=json.load(open('Clients.json'))
 #	days=[]
-#	for i in range (1,6):
-#		i=f'20YY-MM-0{i}'
+#	for i in range (17,30):
+#		i=f'2022-10-{i}'
 #		days.append(i)
-#	Test=async_request_Ozon(clients,days)
-#	asyncio.run(Test.main())
+#	asyncio.run(main(Clients1,days))
