@@ -1,4 +1,5 @@
 uvicorn
+gunicorn
 httpx
 bs4
 asyncio
