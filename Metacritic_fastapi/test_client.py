@@ -40,12 +40,11 @@ def test_go_404():
         assert 'Game not found' in m.json()['detail']
 
 #time check
-if __name__=='__main__': 
-    k=[]
-    with httpx.Client(timeout=None) as client:
-        for i in range(50):
-            start_time = time.time()
-            m=client.get('http://127.0.0.1:8000/games/TeRRaria')
-            k.append (time.time() - start_time)
-            print(time.time() - start_time)
-    print(mean(k))
+#if __name__=='__main__': 
+#    k=[]
+#    with httpx.Client(timeout=None) as client:
+#        for i in range(50):
+#            start_time = time.time()
+#            m=client.get('http://127.0.0.1:8000/games/TeRRaria')
+#            k.append (time.time() - start_time)
+#    print(mean(k))
