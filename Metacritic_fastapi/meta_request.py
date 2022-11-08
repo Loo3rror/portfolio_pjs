@@ -38,7 +38,7 @@ async def get_game_json(game,console='pc'):
 			'publisher':clean_name(soup.find('li',"summary_detail publisher").find('a').text),
 			'developer':filtr_data(soup.find('li','summary_detail developer'),'developer'),
 			'metascore':filtr_data(soup.find('div',"score_summary metascore_summary").find('span',itemprop='ratingValue'),'metascore'),
-			'userscore':float(soup.find('div','userscore_wrap feature_userscore').find('a').find('div').text),
+			'userscore':filtr_data(soup.find('div','userscore_wrap feature_userscore'),'userscore'),
 			'genre':filtr_data(soup.find('li','summary_detail product_genre'),'genre'),
 			'rating':filtr_data(soup.find('li','summary_detail product_rating'),'rating'),
 			'platforms':{'search was for':console, 'also awailable for':filtr_data(soup.find('li','summary_detail product_platforms'),'platforms')}
